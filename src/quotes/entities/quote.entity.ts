@@ -21,10 +21,10 @@ export class Quote {
 
   @ManyToOne(() => Users, (user) => user.quotes)
   @JoinColumn({ name: 'user_id' })
-  user: Promise<Users>;
+  user: Users;
 
   @OneToMany(() => Vote, (vote) => vote.quote)
-  votes: Promise<Vote[]>;
+  votes: Vote[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
@@ -35,6 +35,6 @@ export class Quote {
   constructor(id: string, text: string, user: Users) {
     this.id = id;
     this.text = text;
-    this.user = Promise.resolve(user);
+    this.user = user;
   }
 }

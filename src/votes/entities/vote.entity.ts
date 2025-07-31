@@ -18,19 +18,19 @@ export class Vote {
   @Index('vote_user_id')
   @OneToOne(() => Users, (users) => users.id)
   @JoinColumn({ name: 'user_id' })
-  user: Promise<Users>;
+  user: Users;
 
   @Index('vote_quote_id')
   @ManyToOne(() => Quote, (quote) => quote.id)
   @JoinColumn({ name: 'quote_id' })
-  quote: Promise<Quote>;
+  quote: Quote;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   constructor(id: string, user: Users, quote: Quote) {
     this.id = id;
-    this.user = Promise.resolve(user);
-    this.quote = Promise.resolve(quote);
+    this.user = user;
+    this.quote = quote;
   }
 }

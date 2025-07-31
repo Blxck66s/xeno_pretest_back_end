@@ -18,17 +18,17 @@ export class Users {
   @Column({ type: 'varchar', length: 40, unique: true })
   username: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', select: false })
   password: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
   @OneToMany(() => Quote, (quote) => quote.user)
-  quotes: Promise<Quote[]>;
+  quotes: Quote[];
 
   @OneToOne(() => Vote, (vote) => vote.user)
-  vote: Promise<Vote>;
+  vote: Vote;
 
   constructor(id: string, username: string, password: string) {
     this.id = id;

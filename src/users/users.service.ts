@@ -21,12 +21,15 @@ export class UsersService {
     return await this.usersRepository.find();
   }
 
-  async findOneById(id: Users['id']): Promise<Users | null> {
-    return await this.usersRepository.findOneBy({ id });
-  }
-
   async findOne(field: FindOptionsWhere<Users>): Promise<Users | null> {
-    return await this.usersRepository.findOneBy(field);
+    return await this.usersRepository.findOne({
+      where: field,
+      select: {
+        id: true,
+        username: true,
+        password: true,
+      },
+    });
   }
 
   async update(id: Users['id'], updateUsersDto: UpdateUsersDto): Promise<void> {

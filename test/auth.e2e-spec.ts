@@ -38,7 +38,6 @@ describe('Authentication System (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
     jwtService = moduleFixture.get<JwtService>(JwtService);
@@ -59,7 +58,7 @@ describe('Authentication System (e2e)', () => {
         username: 'test',
         password: 'hashed_password',
       };
-      usersRepository.findOneBy.mockResolvedValueOnce(mockUser);
+      usersRepository.findOne.mockResolvedValueOnce(mockUser);
 
       // Act & Assert
       return request(app.getHttpServer())
@@ -109,7 +108,7 @@ describe('Authentication System (e2e)', () => {
         username: 'newuser',
         password: 'hashed_password',
       };
-      usersRepository.findOneBy.mockResolvedValueOnce(null);
+      usersRepository.findOne.mockResolvedValueOnce(null);
       usersRepository.create.mockReturnValueOnce(mockUser);
       usersRepository.save.mockResolvedValueOnce(mockUser);
 
@@ -126,7 +125,7 @@ describe('Authentication System (e2e)', () => {
     it('should return 409 when username already exists', async () => {
       // Arrange
       const existingUser = { id: '1', username: 'existing', password: 'hash' };
-      usersRepository.findOneBy.mockResolvedValueOnce(existingUser);
+      usersRepository.findOne.mockResolvedValueOnce(existingUser);
 
       // Act & Assert
       return request(app.getHttpServer())
