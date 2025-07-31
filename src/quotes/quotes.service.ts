@@ -11,24 +11,25 @@ export class QuotesService {
     @InjectRepository(Quote)
     private quotesRepository: Repository<Quote>,
   ) {}
-  create(createQuoteDto: CreateQuoteDto) {
+
+  async create(createQuoteDto: CreateQuoteDto) {
     const quote = this.quotesRepository.create(createQuoteDto);
-    return this.quotesRepository.save(quote);
+    return await this.quotesRepository.save(quote);
   }
 
-  findAll() {
-    return this.quotesRepository.find();
+  async findAll() {
+    return await this.quotesRepository.find();
   }
 
-  findOne(id: Quote['id']) {
-    return this.quotesRepository.findOne({ where: { id } });
+  async findOne(id: Quote['id']) {
+    return await this.quotesRepository.findOne({ where: { id } });
   }
 
-  update(id: Quote['id'], updateQuoteDto: UpdateQuoteDto) {
-    return this.quotesRepository.update(id, updateQuoteDto);
+  async update(id: Quote['id'], updateQuoteDto: UpdateQuoteDto) {
+    return await this.quotesRepository.update(id, updateQuoteDto);
   }
 
-  remove(id: Quote['id']) {
-    return this.quotesRepository.delete(id);
+  async remove(id: Quote['id']) {
+    return await this.quotesRepository.delete(id);
   }
 }

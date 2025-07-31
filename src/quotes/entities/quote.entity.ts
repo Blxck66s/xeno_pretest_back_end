@@ -7,8 +7,8 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { Users } from 'src/users/entities/user.entity';
-import { Vote } from 'src/votes/entities/vote.entity';
+import { Users } from '../../users/entities/user.entity';
+import { Vote } from '../../votes/entities/vote.entity';
 
 @Entity({ name: 'quotes' })
 export class Quote {

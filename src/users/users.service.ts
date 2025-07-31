@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Users } from './entities/user.entity';
-import { Repository } from 'typeorm';
-import { CreateUsersDto } from './dto/create-users.dto';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { AuthUsersDto } from './dto/auth-users.dto';
 import { UpdateUsersDto } from './dto/update-users.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -9,20 +9,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class UsersService {
   constructor(
     @InjectRepository(Users)
-    private readonly usersRepository: Repository<Users>,
+    private usersRepository: Repository<Users>,
   ) {}
 
-  async create(createUsersDto: CreateUsersDto): Promise<Users> {
-    const user = this.usersRepository.create(createUsersDto);
-    return this.usersRepository.save(user);
+  async create(authUsersDto: AuthUsersDto): Promise<Users> {
+    const user = this.usersRepository.create(authUsersDto);
+    return await this.usersRepository.save(user);
   }
 
   async findAll(): Promise<Users[]> {
-    return this.usersRepository.find();
+    return await this.usersRepository.find();
   }
 
-  async findOne(id: Users['id']): Promise<Users | null> {
-    return this.usersRepository.findOneBy({ id });
+  async findOneById(id: Users['id']): Promise<Users | null> {
+    return await this.usersRepository.findOneBy({ id });
+  }
+
+  async findOne(field: FindOptionsWhere<Users>): Promise<Users | null> {
+    return await this.usersRepository.findOneBy(field);
   }
 
   async update(id: Users['id'], updateUsersDto: UpdateUsersDto): Promise<void> {

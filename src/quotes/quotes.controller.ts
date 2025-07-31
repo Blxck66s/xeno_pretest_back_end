@@ -1,4 +1,6 @@
 import { Controller } from '@nestjs/common';
 
 @Controller('quotes')
-export class QuotesController {}
+export class QuotesController {
+  constructor() {}
+}

@@ -9,6 +9,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { JwtGuard } from './auth/guard/jwt.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -39,7 +41,13 @@ import { DataSource, DataSourceOptions } from 'typeorm';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard,
+    },
+  ],
 })
 export class AppModule {
   constructor(private dataSource: DataSource) {}

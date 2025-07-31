@@ -1,5 +1,5 @@
-import { Quote } from 'src/quotes/entities/quote.entity';
-import { Vote } from 'src/votes/entities/vote.entity';
+import { Quote } from '../../quotes/entities/quote.entity';
+import { Vote } from '../../votes/entities/vote.entity';
 import {
   Column,
   Entity,
@@ -18,7 +18,7 @@ export class Users {
   @Column({ type: 'varchar', length: 40, unique: true })
   username: string;
 
-  @Column({ type: 'varchar', length: 40 })
+  @Column({ type: 'varchar' })
   password: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
