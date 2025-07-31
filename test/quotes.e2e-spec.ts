@@ -134,7 +134,7 @@ describe('Quotes System (e2e)', () => {
     });
   });
 
-  describe('/quotes/:id (PUT)', () => {
+  describe('/quotes/:id (PATCH)', () => {
     it('should update a quote', async () => {
       const updateDto = { text: 'Updated quote' };
       const updatedQuote = { id: 'q2', text: updateDto.text, userId: user.id };
@@ -142,7 +142,7 @@ describe('Quotes System (e2e)', () => {
       quotesRepository.findOne.mockResolvedValueOnce(updatedQuote);
 
       return request(app.getHttpServer())
-        .put('/quotes/q2')
+        .patch('/quotes/q2')
         .set('Authorization', `Bearer ${accessToken}`)
         .send(updateDto)
         .expect(200)
@@ -155,7 +155,7 @@ describe('Quotes System (e2e)', () => {
       quotesRepository.update.mockResolvedValueOnce({ affected: 0 });
 
       return request(app.getHttpServer())
-        .put('/quotes/q999')
+        .patch('/quotes/q999')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ text: 'nope' })
         .expect(400);

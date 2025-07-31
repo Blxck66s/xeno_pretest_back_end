@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateVoteDto } from './dto/create-vote.dto';
-import { UpdateVoteDto } from './dto/update-vote.dto';
 import { Repository } from 'typeorm';
 import { Vote } from './entities/vote.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,24 +10,45 @@ export class VotesService {
     @InjectRepository(Vote)
     private votesRepository: Repository<Vote>,
   ) {}
-  create(createVoteDto: CreateVoteDto) {
-    const vote = this.votesRepository.create(createVoteDto);
-    return this.votesRepository.save(vote);
+  async createOrUpdate(createVoteDto: CreateVoteDto) {
+    const patchVote = await this.votesRepository
+      .createQueryBuilder()
+      .insert()
+      .into(Vote)
+      .values({
+        user: { id: createVoteDto.userId },
+        quote: { id: createVoteDto.quoteId },
+      })
+      .orUpdate(['quote_id'])
+      .execute();
+
+    if (!patchVote)
+      throw new BadRequestException('Vote could not be created or updated');
+
+    const rawResult = patchVote.raw as { affectedRows: number };
+
+    const isInsert = rawResult.affectedRows === 1;
+    const isUpdate = rawResult.affectedRows === 2;
+
+    if (isInsert || isUpdate) {
+      return await this.votesRepository.findOne({
+        where: {
+          user: { id: createVoteDto.userId },
+          quote: { id: createVoteDto.quoteId },
+        },
+        relations: ['user', 'quote'],
+      });
+    } else
+      throw new BadRequestException('Vote could not be created or updated');
   }
 
-  findAll() {
-    return this.votesRepository.find();
-  }
-
-  findOne(id: Vote['id']) {
-    return this.votesRepository.findOne({ where: { id } });
-  }
-
-  update(id: Vote['id'], updateVoteDto: UpdateVoteDto) {
-    return this.votesRepository.update(id, updateVoteDto);
-  }
-
-  remove(id: Vote['id']) {
-    return this.votesRepository.delete(id);
+  async deleteVote(userId: string) {
+    const existingVote = await this.votesRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
+    if (!existingVote) throw new BadRequestException('Vote not found');
+    await this.votesRepository.delete(existingVote.id);
+    return { message: 'Vote deleted successfully' };
   }
 }

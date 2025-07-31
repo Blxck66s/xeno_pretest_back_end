@@ -6,8 +6,8 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
-  Put,
   Query,
 } from '@nestjs/common';
 import { QuotesService } from './quotes.service';
@@ -51,15 +51,14 @@ export class QuotesController {
     return await this.quotesService.create(createQuoteDto);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('id') id: Quote['id'],
-    @User('id') user: UserPayload,
+    @User() user: UserPayload,
     @Body() updateQuoteDto: UpdateQuoteDto,
   ) {
-    updateQuoteDto.userId = user.id;
-    return await this.quotesService.update(id, updateQuoteDto);
+    return await this.quotesService.update(id, updateQuoteDto, user.id);
   }
 
   @Delete(':id')

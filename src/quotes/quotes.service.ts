@@ -64,8 +64,15 @@ export class QuotesService {
     return { page, limit, total, data };
   }
 
-  async update(id: Quote['id'], updateQuoteDto: UpdateQuoteDto) {
-    const result = await this.quotesRepository.update(id, updateQuoteDto);
+  async update(
+    id: Quote['id'],
+    updateQuoteDto: UpdateQuoteDto,
+    userId: Users['id'],
+  ) {
+    const result = await this.quotesRepository.update(id, {
+      ...updateQuoteDto,
+      user: { id: userId },
+    });
     if (result && result.affected === 1) {
       return await this.quotesRepository.findOne({ where: { id } });
     } else throw new BadRequestException(`Quote not found or update failed.`);
