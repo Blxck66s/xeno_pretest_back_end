@@ -7,6 +7,22 @@ import { Quote } from '../src/quotes/entities/quote.entity';
 import { JwtService } from '@nestjs/jwt';
 import { App } from 'supertest/types';
 
+interface MockQueryBuilder {
+  select: jest.Mock;
+  leftJoin: jest.Mock;
+  loadRelationCountAndMap: jest.Mock;
+  andWhere: jest.Mock;
+  addSelect: jest.Mock;
+  groupBy: jest.Mock;
+  orderBy: jest.Mock;
+  skip: jest.Mock;
+  take: jest.Mock;
+  getManyAndCount: jest.Mock;
+  getRawAndEntities: jest.Mock;
+  having: jest.Mock;
+  getCount: jest.Mock;
+}
+
 describe('Quotes System (e2e)', () => {
   let app: INestApplication<App>;
   let jwtService: JwtService;
@@ -76,27 +92,191 @@ describe('Quotes System (e2e)', () => {
           voteCount: 0,
         },
       ];
-      const mockQueryBuilder: any = {
+
+      const mockQueryBuilder: MockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        having: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getRawAndEntities: jest.fn().mockResolvedValue({
+          entities: mockQuotes,
+          raw: [{ voteCount: 0 }],
+        }),
+        getManyAndCount: jest.fn().mockResolvedValue([mockQuotes, 1]),
+        getCount: jest.fn().mockResolvedValue(1),
+      };
+
+      quotesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+      return request(app.getHttpServer())
+        .get(
+          '/quotes/list?page=1&limit=10&sortField=createdAt&sortDirection=asc',
+        )
+        .expect(200)
+        .expect(
+          (res: {
+            body: { data: any; page: number; total: number; limit: number };
+          }) => {
+            expect(res.body.data).toBeDefined();
+            expect(res.body.page).toBe(1);
+            expect(res.body.limit).toBe(10);
+            expect(res.body.total).toBe(1);
+          },
+        );
+    });
+
+    it('should filter quotes by text', async () => {
+      const mockQuotes = [
+        {
+          id: 'q1',
+          text: 'filtered quote',
+          user: { id: user.id, username: user.username },
+          createdAt: new Date(),
+          voteCount: 0,
+        },
+      ];
+
+      const mockQueryBuilder: MockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        having: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([mockQuotes, 1]),
+        getRawAndEntities: jest.fn().mockResolvedValue({
+          entities: mockQuotes,
+          raw: [{ voteCount: 0 }],
+        }),
+        getCount: jest.fn().mockResolvedValue(1),
+      };
+
+      quotesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+      return request(app.getHttpServer())
+        .get('/quotes/list?text=filtered&page=1&limit=10')
+        .expect(200)
+        .expect(() => {
+          expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+            'quote.text LIKE :text',
+            { text: '%filtered%' },
+          );
+        });
+    });
+
+    it('should filter quotes by vote count', async () => {
+      const mockQuotes = [
+        {
+          id: 'q1',
+          text: 'popular quote',
+          user: { id: user.id, username: user.username },
+          createdAt: new Date(),
+          voteCount: 5,
+        },
+      ];
+
+      const mockQueryBuilder: Partial<MockQueryBuilder> = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        having: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getRawAndEntities: jest.fn().mockResolvedValue({
+          entities: mockQuotes,
+          raw: [{ voteCount: 5 }],
+        }),
+        getCount: jest.fn().mockResolvedValue(1),
+      };
+
+      // Mock for count query
+      const mockCountQueryBuilder: Partial<MockQueryBuilder> = {
+        leftJoin: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        having: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(1),
+      };
+
+      quotesRepository.createQueryBuilder
+        .mockReturnValueOnce(mockQueryBuilder)
+        .mockReturnValueOnce(mockCountQueryBuilder);
+
+      return request(app.getHttpServer())
+        .get('/quotes/list?minVotes=3&maxVotes=10&page=1&limit=10')
+        .expect(200)
+        .expect(() => {
+          expect(mockQueryBuilder.having).toHaveBeenCalledWith(
+            'COUNT(vote.id) >= :minVotes',
+            { minVotes: 3 },
+          );
+          expect(mockQueryBuilder.having).toHaveBeenCalledWith(
+            'COUNT(vote.id) <= :maxVotes',
+            { maxVotes: 10 },
+          );
+        });
+    });
+
+    it('should sort quotes by voteCount', async () => {
+      const mockQuotes = [
+        {
+          id: 'q1',
+          text: 'quote with votes',
+          user: { id: user.id, username: user.username },
+          createdAt: new Date(),
+          voteCount: 3,
+        },
+      ];
+
+      const mockQueryBuilder: Partial<MockQueryBuilder> = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
+        getRawAndEntities: jest.fn().mockResolvedValue({
+          entities: mockQuotes,
+          raw: [{ voteCount: 3 }],
+        }),
         getCount: jest.fn().mockResolvedValue(1),
-        getMany: jest.fn().mockResolvedValue(mockQuotes),
-        loadRelationCountAndMap: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([mockQuotes, 1]),
-        select: jest.fn().mockReturnThis(),
-        leftJoin: jest.fn().mockReturnThis(),
       };
-      quotesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+      const mockCountQueryBuilder: Partial<MockQueryBuilder> = {
+        leftJoin: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getCount: jest.fn().mockResolvedValue(1),
+      };
+
+      quotesRepository.createQueryBuilder
+        .mockReturnValueOnce(mockQueryBuilder)
+        .mockReturnValueOnce(mockCountQueryBuilder);
 
       return request(app.getHttpServer())
-        .get('/quotes/list?page=1&limit=10')
+        .get(
+          '/quotes/list?sortField=voteCount&sortDirection=desc&page=1&limit=10',
+        )
         .expect(200)
-        .expect((res: { body: { data: any; page: number; total: number } }) => {
-          expect(res.body.data).toBeDefined();
-          expect(res.body.page).toBe(1);
-          expect(res.body.total).toBe(1);
+        .expect(() => {
+          expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+            'voteCount',
+            'DESC',
+          );
         });
     });
   });
@@ -132,6 +312,14 @@ describe('Quotes System (e2e)', () => {
         .send({ text: '' })
         .expect(400);
     });
+
+    it('should fail validation with non-string text', async () => {
+      return request(app.getHttpServer())
+        .post('/quotes')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ text: 123 })
+        .expect(400);
+    });
   });
 
   describe('/quotes/:id (PATCH)', () => {
@@ -160,6 +348,22 @@ describe('Quotes System (e2e)', () => {
         .send({ text: 'nope' })
         .expect(400);
     });
+
+    it('should fail validation with empty text', async () => {
+      return request(app.getHttpServer())
+        .patch('/quotes/q2')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ text: '' })
+        .expect(400);
+    });
+
+    it('should fail validation with non-string text', async () => {
+      return request(app.getHttpServer())
+        .patch('/quotes/q2')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ text: 123 })
+        .expect(400);
+    });
   });
 
   describe('/quotes/:id (DELETE)', () => {
@@ -183,6 +387,51 @@ describe('Quotes System (e2e)', () => {
         .delete('/quotes/q999')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(400);
+    });
+
+    it('should return 400 if quote is owned by different user', async () => {
+      quotesRepository.findOne.mockResolvedValueOnce(null);
+
+      return request(app.getHttpServer())
+        .delete('/quotes/q2')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(400);
+    });
+  });
+
+  describe('Authentication', () => {
+    it('should require authentication for POST /quotes', async () => {
+      return request(app.getHttpServer())
+        .post('/quotes')
+        .send({ text: 'Test quote' })
+        .expect(401);
+    });
+
+    it('should require authentication for PATCH /quotes/:id', async () => {
+      return request(app.getHttpServer())
+        .patch('/quotes/q1')
+        .send({ text: 'Updated text' })
+        .expect(401);
+    });
+
+    it('should require authentication for DELETE /quotes/:id', async () => {
+      return request(app.getHttpServer()).delete('/quotes/q1').expect(401);
+    });
+
+    it('should allow public access to GET /quotes/list', async () => {
+      const mockQueryBuilder: any = {
+        select: jest.fn().mockReturnThis(),
+        leftJoin: jest.fn().mockReturnThis(),
+        loadRelationCountAndMap: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      };
+
+      quotesRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+      return request(app.getHttpServer()).get('/quotes/list').expect(200);
     });
   });
 });

@@ -1,12 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { User, UserPayload } from './decorator/user.decorator';
+import { UsersService } from './users.service';
+import { Users } from './entities/user.entity';
 
 @Controller('users')
 export class UsersController {
-  constructor() {}
+  constructor(private usersService: UsersService) {}
 
   @Get('profile')
-  getProfile(@User() user: UserPayload): UserPayload {
-    return user;
+  async getProfile(@User() user: UserPayload): Promise<Users | null> {
+    return await this.usersService.getProfile(user.id);
   }
 }

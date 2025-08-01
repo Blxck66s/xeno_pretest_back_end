@@ -15,23 +15,28 @@ import { Quote } from '../entities/quote.entity';
 export class FilterQuoteDto {
   @IsOptional()
   @IsUUID('4')
+  id?: Quote['id'];
+  @IsOptional()
+  @IsUUID('4')
   userId?: Users['id'];
   @IsOptional()
   @IsString()
   @Transform(({ value }: { value: string }) => value && value.trim())
   text?: Quote['text'];
   @IsOptional()
+  @Transform(({ value }: { value: string }) => value && +value)
   @IsNumber()
   minVotes?: number;
   @IsOptional()
+  @Transform(({ value }: { value: string }) => value && +value)
   @IsNumber()
   maxVotes?: number;
   @IsOptional()
   @IsDateString()
-  startDate?: Date;
+  dateFrom?: Date;
   @IsOptional()
   @IsDateString()
-  endDate?: Date;
+  dateTo?: Date;
 }
 
 export class PaginationQuoteDto {
@@ -52,11 +57,11 @@ export class PaginationQuoteDto {
 export class SortQuoteDto {
   @IsOptional()
   @IsString()
-  @IsEnum(['id', 'text', 'createdAt'])
-  sortField: 'id' | 'text' | 'createdAt' = 'createdAt';
+  @IsEnum(['id', 'voteCount', 'text', 'createdAt'])
+  sortField: 'id' | 'voteCount' | 'text' | 'createdAt' = 'createdAt';
 
   @IsOptional()
   @IsString()
   @IsEnum(['asc', 'desc'])
-  sortOrder: 'asc' | 'desc' = 'asc';
+  sortDirection: 'asc' | 'desc' = 'asc';
 }

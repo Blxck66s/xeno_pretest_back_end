@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Users } from './entities/user.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { AuthUsersDto } from './dto/auth-users.dto';
-import { UpdateUsersDto } from './dto/update-users.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
@@ -17,10 +16,6 @@ export class UsersService {
     return await this.usersRepository.save(user);
   }
 
-  async findAll(): Promise<Users[]> {
-    return await this.usersRepository.find();
-  }
-
   async findOne(field: FindOptionsWhere<Users>): Promise<Users | null> {
     return await this.usersRepository.findOne({
       where: field,
@@ -32,11 +27,16 @@ export class UsersService {
     });
   }
 
-  async update(id: Users['id'], updateUsersDto: UpdateUsersDto): Promise<void> {
-    await this.usersRepository.update(id, updateUsersDto);
-  }
-
-  async remove(id: Users['id']): Promise<void> {
-    await this.usersRepository.delete(id);
+  async getProfile(id: string): Promise<Users | null> {
+    return await this.usersRepository.findOne({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        createdAt: true,
+        vote: { id: true, createdAt: true, quote: { id: true } },
+      },
+      relations: ['vote', 'vote.quote'],
+    });
   }
 }
